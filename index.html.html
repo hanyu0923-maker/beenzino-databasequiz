@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="ko" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beenzino Data Modeling Quiz - Spotify Edition</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        spotify: {
+                            green: '#1DB954',
+                            greenHover: '#1ed760',
+                            black: '#121212',
+                            darkGray: '#181818',
+                            lightGray: '#282828',
+                            muted: '#b3b3b3',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'Noto Sans KR', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            font-family: 'Inter', 'Noto Sans KR', sans-serif;
+            overflow-x: hidden;
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #121212;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #282828;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3e3e3e;
+        }
+        .pulse-glow {
+            box-shadow: 0 0 20px rgba(29, 185, 84, 0.4);
+        }
+    </style>
+</head>
+<body class="bg-spotify-black text-white min-h-screen flex flex-col justify-between selection:bg-spotify-green selection:text-black">
+
+    <!-- Top Navigation / Header -->
+    <header class="bg-black/80 backdrop-blur-md sticky top-0 z-50 px-6 py-4 flex items-center justify-between border-b border-white/5">
+        <div class="flex items-center space-x-3 cursor-pointer" onclick="location.reload()">
+            <div class="w-10 h-10 rounded-full bg-spotify-green flex items-center justify-center text-black font-black text-xl shadow-lg pulse-glow">
+                <i class="fa-solid fa-compact-disc animate-spin" style="animation-duration: 8s;"></i>
+            </div>
+            <div>
+                <span class="font-bold text-lg tracking-tight block">Beenzino DB LP</span>
+                <span class="text-xs text-spotify-muted">Data Modeling & Discography</span>
+            </div>
+        </div>
+        <div class="flex items-center space-x-4">
+            <div id="header-stats" class="hidden sm:flex items-center space-x-2 bg-spotify-darkGray px-3 py-1.5 rounded-full text-xs text-spotify-muted border border-white/5">
+                <i class="fa-solid fa-compact-disc text-spotify-green animate-spin" style="animation-duration: 6s;"></i>
+                <span id="header-current-track">Track 1 of 20</span>
+            </div>
+            <div class="bg-spotify-lightGray hover:bg-[#3E3E3E] text-white px-4 py-1.5 rounded-full text-xs font-bold transition flex items-center space-x-2 cursor-pointer" onclick="openShareModal()">
+                <i class="fa-solid fa-share-nodes"></i>
+                <span>Share Quiz</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Layout -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-4 gap-6 items-start pb-24">
+        
+        <!-- Left Sidebar: Playlist / Tracklist Overview -->
+        <aside class="hidden lg:block lg:col-span-1 bg-spotify-darkGray rounded-xl p-4 border border-white/5 sticky top-24 max-h-[calc(100vh-140px)] flex flex-col">
+            <div class="flex items-center space-x-3 mb-4 pb-3 border-b border-white/10">
+                <div class="w-12 h-12 bg-gradient-to-br from-indigo-500 via-purple-500 to-spotify-green rounded-full flex items-center justify-center shadow-md">
+                    <i class="fa-solid fa-compact-disc text-black text-xl animate-spin" style="animation-duration: 10s;"></i>
+                </div>
+                <div>
+                    <h2 class="font-bold text-sm leading-snug">Beenzino LP Mix</h2>
+                    <p class="text-xs text-spotify-muted">20 Tracks • Data Modeling</p>
+                </div>
+            </div>
+            <div id="playlist-tracklist" class="overflow-y-auto space-y-1.5 flex-1 pr-1">
+                <!-- Dynamically populated via JS -->
+            </div>
+        </aside>
+
+        <!-- Right / Center Main Area: Quiz Player Container -->
+        <section class="lg:col-span-3 flex flex-col space-y-6">
+            
+            <!-- Welcome Screen View -->
+            <div id="welcome-view" class="bg-gradient-to-b from-[#222222] to-spotify-darkGray rounded-2xl p-6 md:p-10 border border-white/10 shadow-2xl relative overflow-hidden">
+                <div class="absolute -right-16 -top-16 w-64 h-64 bg-spotify-green/10 rounded-full blur-3xl pointer-events-none"></div>
+                
+                <div class="flex flex-col md:flex-row items-center gap-8 z-10 relative">
+                    <div class="w-48 h-48 md:w-60 md:h-60 rounded-full overflow-hidden shadow-2xl shrink-0 group relative border-4 border-white/10 bg-gradient-to-tr from-purple-900 via-spotify-black to-emerald-900 flex flex-col items-center justify-center p-6 text-center pulse-glow">
+                        <div class="absolute inset-2 rounded-full border border-white/10 pointer-events-none"></div>
+                        <div class="absolute inset-8 rounded-full border border-white/10 pointer-events-none"></div>
+                        <i class="fa-solid fa-compact-disc text-6xl text-spotify-green mb-2 animate-spin" style="animation-duration: 12s;"></i>
+                        <span class="font-extrabold text-xs tracking-widest text-white mt-1">BEENZINO LP EDITION</span>
+                    </div>
+                    
+                    <div class="flex-1 text-center md:text-left">
+                        <span class="text-xs font-bold tracking-widest text-spotify-green uppercase bg-spotify-green/10 px-3 py-1 rounded-full border border-spotify-green/20">Data Modeling X Beenzino</span>
+                        <h1 class="text-3xl md:text-5xl font-black mt-3 mb-3 tracking-tight">빈지노 명곡과 함께하는 데이터 모델링</h1>
+                        <p class="text-spotify-muted text-sm md:text-base leading-relaxed mb-6">
+                            Aqua Man, Dali Van Picasso, Break 등 빈지노의 명곡 세계관에 데이터 모델링 개념(개념적/논리적 관점, ERD, 엔티티, 식별자, 복합키, M:N 해소)을 녹여낸 20문항 플레이리스트입니다.
+                        </p>
+                        
+                        <div class="flex flex-wrap items-center justify-center md:justify-start gap-4">
+                            <button onclick="startQuiz()" class="bg-spotify-green hover:bg-spotify-greenHover text-black font-bold px-8 py-4 rounded-full shadow-lg hover:scale-105 transition transform flex items-center space-x-3 text-base">
+                                <i class="fa-solid fa-play text-lg"></i>
+                                <span>Play LP (20 Tracks)</span>
+                            </button>
+                            <div class="text-xs text-spotify-muted flex items-center space-x-2">
+                                <i class="fa-regular fa-clock"></i>
+                                <span>약 10~15분 소요</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quiz Active View (Initially Hidden) -->
+            <div id="quiz-view" class="hidden flex flex-col space-y-4">
+                
+                <!-- Track Context Card -->
+                <div class="bg-gradient-to-r from-spotify-darkGray to-[#1e1e1e] rounded-xl p-5 border border-white/10 flex items-center justify-between shadow-lg">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-14 h-14 rounded-full bg-spotify-green/20 border border-spotify-green/40 flex items-center justify-center text-spotify-green text-2xl shadow-inner shrink-0">
+                            <i class="fa-solid fa-compact-disc animate-spin" style="animation-duration: 6s;" id="current-track-icon"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs font-semibold px-2 py-0.5 bg-spotify-green/20 text-spotify-green rounded-md" id="question-badge">Track 01</span>
+                                <span class="text-xs text-spotify-muted" id="track-album">Beenzino Track</span>
+                            </div>
+                            <h2 class="text-lg md:text-xl font-bold mt-1" id="track-title">Aqua Man</h2>
+                        </div>
+                    </div>
+                    <div class="text-right hidden sm:block">
+                        <span class="text-xs text-spotify-muted block">Progress</span>
+                        <span class="text-sm font-bold text-spotify-green" id="progress-text">1 / 20</span>
+                    </div>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="w-full bg-spotify-darkGray h-2 rounded-full overflow-hidden border border-white/5">
+                    <div id="progress-bar" class="bg-spotify-green h-full transition-all duration-300" style="width: 5%;"></div>
+                </div>
+
+                <!-- Question & Options Card -->
+                <div class="bg-spotify-darkGray rounded-2xl p-6 md:p-8 border border-white/10 shadow-xl relative">
+                    <h3 class="text-lg md:text-xl font-semibold mb-6 leading-relaxed text-white" id="question-text">
+                        질문 내용이 여기에 표시됩니다.
+                    </h3>
+
+                    <!-- Options Container -->
+                    <div id="options-container" class="space-y-3">
+                        <!-- Dynamically populated options -->
+                    </div>
+
+                    <!-- Explanation Box (Hidden until answered) -->
+                    <div id="explanation-box" class="hidden mt-6 p-4 rounded-xl bg-black/40 border border-white/10 animate-fadeIn">
+                        <div class="flex items-start space-x-3">
+                            <div id="explanation-icon" class="mt-1 text-lg"></div>
+                            <div>
+                                <h4 class="font-bold text-sm mb-1" id="explanation-title">해설</h4>
+                                <p class="text-xs md:text-sm text-spotify-muted leading-relaxed" id="explanation-text"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Navigation / Next Track -->
+                <div class="flex items-center justify-between pt-2">
+                    <div class="text-xs text-spotify-muted">
+                        Tip: 정답을 선택하면 빈지노 곡 테마와 결합된 상세 해설이 제공됩니다.
+                    </div>
+                    <button id="next-btn" onclick="nextQuestion()" class="hidden bg-white hover:bg-spotify-muted text-black font-bold px-6 py-3 rounded-full transition flex items-center space-x-2 shadow-lg text-sm">
+                        <span>Next Track</span>
+                        <i class="fa-solid fa-forward-step"></i>
+                    </button>
+                </div>
+
+            </div>
+
+            <!-- Result View (Initially Hidden) -->
+            <div id="result-view" class="hidden bg-spotify-darkGray rounded-2xl p-6 md:p-10 border border-white/10 shadow-2xl text-center">
+                <div class="w-20 h-20 bg-spotify-green/20 border-2 border-spotify-green rounded-full flex items-center justify-center mx-auto mb-6 text-spotify-green text-3xl pulse-glow">
+                    <i class="fa-solid fa-compact-disc animate-spin" style="animation-duration: 5s;"></i>
+                </div>
+                
+                <span class="text-xs font-bold tracking-widest text-spotify-green uppercase bg-spotify-green/10 px-3 py-1 rounded-full border border-spotify-green/20">Spotify Wrapped Result</span>
+                <h2 class="text-3xl md:text-4xl font-black mt-4 mb-2">LP Playlist Completed!</h2>
+                <p class="text-spotify-muted text-sm mb-6" id="result-subtitle">빈지노 명곡과 함께한 데이터 모델링 20문항 학습 완료</p>
+
+                <!-- Score Card -->
+                <div class="bg-black/50 border border-white/10 rounded-xl p-6 max-w-md mx-auto mb-8">
+                    <div class="text-5xl font-black text-spotify-green mb-2" id="final-score">20 / 20</div>
+                    <p class="text-xs text-spotify-muted mb-4">정답률 <span id="final-percentage" class="text-white font-bold">100%</span></p>
+                    <div class="inline-block bg-spotify-green/20 text-spotify-green font-bold text-sm px-4 py-1.5 rounded-full border border-spotify-green/30" id="grade-badge">
+                        Certified Beenzino DB Master
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-wrap items-center justify-center gap-4">
+                    <button onclick="restartQuiz()" class="bg-spotify-green hover:bg-spotify-greenHover text-black font-bold px-8 py-3.5 rounded-full transition shadow-lg flex items-center space-x-2">
+                        <i class="fa-solid fa-rotate-right"></i>
+                        <span>Restart LP</span>
+                    </button>
+                    <button onclick="openShareModal()" class="bg-spotify-lightGray hover:bg-[#3E3E3E] text-white font-bold px-8 py-3.5 rounded-full transition border border-white/10 flex items-center space-x-2">
+                        <i class="fa-solid fa-share-nodes"></i>
+                        <span>Share Score Card</span>
+                    </button>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Mini Player Footer (Spotify Aesthetic) -->
+    <footer class="bg-black border-t border-white/10 px-4 py-3 flex items-center justify-between fixed bottom-0 left-0 right-0 z-50 shadow-2xl">
+        <div class="flex items-center space-x-3 w-1/3">
+            <div class="w-12 h-12 bg-spotify-darkGray rounded-full border border-white/10 flex items-center justify-center text-spotify-green shrink-0 shadow-inner">
+                <i class="fa-solid fa-compact-disc animate-spin" style="animation-duration: 4s;"></i>
+            </div>
+            <div class="overflow-hidden hidden sm:block">
+                <h4 id="player-track-title" class="text-xs md:text-sm font-bold truncate">Beenzino Data Modeling LP</h4>
+                <p id="player-track-artist" class="text-xs text-spotify-muted truncate">Spotify x Beenzino Edition</p>
+            </div>
+        </div>
+
+        <div class="flex flex-col items-center justify-center w-1/3">
+            <div class="flex items-center space-x-4">
+                <button onclick="prevQuestionPlayer()" class="text-spotify-muted hover:text-white transition text-sm cursor-pointer"><i class="fa-solid fa-backward-step"></i></button>
+                <div class="w-8 h-8 bg-spotify-green text-black rounded-full flex items-center justify-center shadow font-bold text-xs">
+                    <i class="fa-solid fa-play"></i>
+                </div>
+                <button onclick="nextQuestionPlayer()" class="text-spotify-muted hover:text-white transition text-sm cursor-pointer"><i class="fa-solid fa-forward-step"></i></button>
+            </div>
+        </div>
+
+        <div class="flex items-center justify-end space-x-3 w-1/3 text-spotify-muted text-xs">
+            <i class="fa-solid fa-volume-high hidden sm:inline"></i>
+            <div class="w-20 bg-spotify-lightGray h-1 rounded-full hidden sm:block overflow-hidden">
+                <div class="bg-spotify-green w-full h-full"></div>
+            </div>
+            <span id="player-counter">01/20</span>
+        </div>
+    </footer>
+
+    <!-- Share Modal -->
+    <div id="share-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-spotify-darkGray border border-white/10 rounded-2xl p-6 md:p-8 max-w-md w-full shadow-2xl relative">
+            <button onclick="closeShareModal()" class="absolute top-4 right-4 text-spotify-muted hover:text-white text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="text-center">
+                <div class="w-16 h-16 bg-spotify-green/20 rounded-full flex items-center justify-center mx-auto mb-4 text-spotify-green text-2xl">
+                    <i class="fa-solid fa-compact-disc animate-spin" style="animation-duration: 6s;"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-2">Share Your Results</h3>
+                <p class="text-xs text-spotify-muted mb-6">빈지노 플레이리스트 데이터 모델링 퀴즈 결과를 공유해보세요!</p>
+                <div class="bg-black/50 border border-white/10 p-4 rounded-xl text-left mb-6">
+                    <div class="text-xs text-spotify-green font-bold mb-1">Spotify Wrapped Card</div>
+                    <div class="text-sm font-semibold" id="share-card-text">빈지노 데이터 모델링 퀴즈 완료! 점수: 0/20점</div>
+                </div>
+                <button onclick="copyShareText()" class="w-full bg-spotify-green hover:bg-spotify-greenHover text-black font-bold py-3 rounded-full transition shadow-lg text-sm flex items-center justify-center space-x-2">
+                    <i class="fa-regular fa-copy"></i>
+                    <span>Copy Share Text</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Data and Quiz Logic -->
+    <script>
+        const quizData = [
+            {
+                id: 1,
+                track: "Aqua Man",
+                category: "데이터 모델링 3대 관점",
+                question: "빈지노의 《Aqua Man》에서 어장관리를 하듯, 데이터 모델링 역시 현실 세계를 바라보는 3대 관점이 존재한다. 다음 중 3대 관점에 해당하지 않는 것은?",
+                options: [
+                    "데이터(What) 관점",
+                    "프로세스(How) 관점",
+                    "상호작용(Interaction) 관점",
+                    "하드웨어(Hardware) 관점"
+                ],
+                answer: 3,
+                explanation: "데이터 모델링의 3대 관점은 데이터(What), 프로세스(How), 그리고 이들의 상호작용(Interaction)입니다. 하드웨어 관점은 물리적 구축 영역에 가깝습니다."
+            },
+            {
+                id: 2,
+                track: "Dali Van Picasso",
+                category: "모델링 진행 단계",
+                question: "예술가처럼 영감을 구체화하는 데이터 모델링의 진행 단계 순서로 올바른 것은?",
+                options: [
+                    "물리적 모델링 → 논리적 모델링 → 개념적 모델링",
+                    "개념적 모델링 → 논리적 모델링 → 물리적 모델링",
+                    "논리적 모델링 → 개념적 모델링 → 물리적 모델링",
+                    "개념적 모델링 → 물리적 모델링 → 논리적 모델링"
+                ],
+                answer: 1,
+                explanation: "데이터 모델링은 추상화 수준이 높은 '개념적 모델링'에서 출발해 속성과 키가 정의되는 '논리적 모델링', 최종 구현인 '물리적 모델링' 순으로 진행됩니다."
+            },
+            {
+                id: 3,
+                track: "Life Goes On",
+                category: "엔티티의 특성",
+                question: "빈지노의 노래 제목처럼 삶이 계속되듯, 데이터베이스의 '엔티티(Entity)'가 반드시 만족해야 할 특성으로 가장 거리가 먼 것은?",
+                options: [
+                    "업무에서 실제 사용되는 정보여야 한다.",
+                    "반드시 2개 이상의 인스턴스(행)를 가져야 한다.",
+                    "반드시 하나의 속성(컬럼)만 가져야 한다.",
+                    "유일한 식별자에 의해 식별 가능해야 한다."
+                ],
+                answer: 2,
+                explanation: "엔티티는 1개 이상의 속성을 가질 수 있으며, 1개만 가져야 하는 것은 아닙니다."
+            },
+            {
+                id: 4,
+                track: "Up All Night",
+                category: "엔티티 명명 규칙",
+                question: "밤을 새워 가며(Up All Night) 데이터베이스를 설계할 때 준수해야 할 엔티티 명명 규칙으로 옳은 것은?",
+                options: [
+                    "약어와 복수 명사를 적극적으로 쓴다.",
+                    "업무 용어를 사용하며 단수 명사로 표현하고 띄어쓰기를 하지 않는다.",
+                    "엔티티 이름은 동사형으로만 작성한다.",
+                    "다른 엔티티와 이름이 완전히 중복되어도 무방하다."
+                ],
+                answer: 1,
+                explanation: "엔티티 명명 규칙은 업무 용어 사용, 약어 지양, 단수 명사 표현, 띄어쓰기 금지, 의미 중복 방지입니다."
+            },
+            {
+                id: 5,
+                track: "Break",
+                category: "관계(Relationship) 카디널리티",
+                question: "《Break》를 부르며 새로운 도전을 하듯, 회원과 주문 엔티티 간에 '한 명의 회원은 여러 주문을 할 수 있고, 주문은 한 회원에게만 속한다'면 카디널리티는?",
+                options: [
+                    "1 : 1",
+                    "1 : N",
+                    "N : M",
+                    "M : N"
+                ],
+                answer: 1,
+                explanation: "회원(1) 대 주문(N)의 관계이므로 1:N 카디널리티를 가집니다."
+            },
+            {
+                id: 6,
+                track: "If I Die Tomorrow",
+                category: "M:N 관계 해소",
+                question: "내일 어떻게 될지 모르니 완벽한 설계를 해야 한다! 주문과 상품 간의 다대다(M:N) 관계를 해소하기 위해 생성하는 교차 엔티티는?",
+                options: [
+                    "회원 엔티티",
+                    "주문상품 엔티티",
+                    "배송기사 엔티티",
+                    "로그인 엔티티"
+                ],
+                answer: 1,
+                explanation: "주문과 상품의 M:N 관계는 두 부모의 PK를 상속받는 '주문상품' 교차 엔티티를 통해 1:N 관계로 분해하여 해소합니다."
+            },
+            {
+                id: 7,
+                track: "Time Travel",
+                category: "주식별자의 5대 속성",
+                question: "시간을 거슬러 올라가도 변하지 않아야 하는 주식별자의 5대 속성에 해당하지 않는 것은?",
+                options: [
+                    "유일성",
+                    "최소성",
+                    "불변성",
+                    "가변성 (Variable)"
+                ],
+                answer: 3,
+                explanation: "주식별자는 값이 변하지 않는 '불변성'을 가져야 하므로 가변성은 성질에 해당하지 않습니다."
+            },
+            {
+                id: 8,
+                track: "Always Awake",
+                category: "식별자 분류",
+                question: "늘 깨어서(Always Awake) 부모 엔티티의 식별자를 상속받아 자식 엔티티의 주식별자나 외래키로 사용하는 식별자는?",
+                options: [
+                    "내부식별자",
+                    "외부식별자 (External Identifier)",
+                    "단일식별자",
+                    "원조식별자"
+                ],
+                answer: 1,
+                explanation: "다른 부모 엔티티로부터 상속받은 식별자는 외부식별자(Foreign Key)라고 합니다."
+            },
+            {
+                id: 9,
+                track: "Jackson Pollock",
+                category: "복합식별자",
+                question: "예술 작품처럼 여러 요소를 조합하는 복합식별자에 대한 설명으로 가장 옳은 것은?",
+                options: [
+                    "하나의 속성만으로 인스턴스를 구분한다.",
+                    "두 개 이상의 속성을 조합하여 인스턴스를 고유하게 식별한다.",
+                    "반드시 대리키여야만 한다.",
+                    "외부식별자는 절대 포함할 수 없다."
+                ],
+                answer: 1,
+                explanation: "복합식별자는 두 개 이상의 속성을 조합하여 주식별자를 구성하는 형태입니다(예: 주문번호 + 상품번호)."
+            },
+            {
+                id: 10,
+                track: "Nike Shoes",
+                category: "원조 vs 대리 식별자",
+                question: "신발 브랜드처럼 현실 세계에 이미 존재하는 주민등록번호 같은 본질적 식별자를 무엇이라 부르는가?",
+                options: [
+                    "대리식별자 (Surrogate Identifier)",
+                    "원조식별자 (Natural Identifier)",
+                    "보조식별자",
+                    "임시식별자"
+                ],
+                answer: 1,
+                explanation: "현실 세계에 이미 존재하는 고유 식별자는 원조식별자, 시스템이 임의로 생성한 인공 키는 대리식별자입니다."
+            },
+            {
+                id: 11,
+                track: "Boogie On & On",
+                category: "식별자 vs 비식별자 관계",
+                question: "부모의 식별자가 자식의 주식별자(PK)로 상속되는 관계와, 일반 속성(FK)으로 내려가는 관계를 각각 무엇이라 하는가?",
+                options: [
+                    "식별자 관계와 비식별자 관계",
+                    "상속 관계와 독립 관계",
+                    "단방향 관계와 양방향 관계",
+                    "정규화와 반정규화"
+                ],
+                answer: 0,
+                explanation: "부모 PK가 자식 PK로 참여하면 식별자 관계, 일반 속성으로 참여하면 비식별자 관계입니다."
+            },
+            {
+                id: 12,
+                track: "Blurry",
+                category: "온라인 쇼핑몰 모델링",
+                question: "온라인 쇼핑몰에서 고객과 주문 간의 카디널리티를 흐림(Blurry) 없이 명확히 표현할 때 올바른 것은?",
+                options: [
+                    "고객(1) : 주문(1)",
+                    "고객(1) : 주문(N)",
+                    "고객(N) : 주문(1)",
+                    "고객(M) : 주문(N)"
+                ],
+                answer: 1,
+                explanation: "한 명의 고객은 여러 번 주문할 수 있으므로 고객(1)과 주문(N)은 1:N 관계입니다."
+            },
+            {
+                id: 13,
+                track: "So Good",
+                category: "병원 예약 시스템 모델링",
+                question: "병원 예약 시스템에서 환자와 진료기록의 관계 중, 진료기록 엔티티에 반드시 포함되어야 하는 외래키(FK)는?",
+                options: [
+                    "환자번호(FK)",
+                    "주차장번호(FK)",
+                    "건물번호(FK)",
+                    "식당번호(FK)"
+                ],
+                answer: 0,
+                explanation: "진료기록은 어떤 환자의 기록인지 알아야 하므로 환자번호(FK)가 필수적으로 포함됩니다."
+            },
+            {
+                id: 14,
+                track: "Gogh",
+                category: "ERD 표기법",
+                question: "반 고흐의 그림처럼 시각화하는 ERD(Entity Relationship Diagram)에서 엔티티를 나타내는 기본 도형은?",
+                options: [
+                    "사각형",
+                    "다이아몬드",
+                    "타원형",
+                    "오각형"
+                ],
+                answer: 0,
+                explanation: "ERD에서 엔티티는 사각형, 관계는 다이아몬드, 속성은 타원으로 표기합니다."
+            },
+            {
+                id: 15,
+                track: "January, February, March...",
+                category: "대학교 도서관 모델링",
+                question: "도서관 시스템에서 회원이 도서를 대출할 때, '대출' 엔티티가 갖추어야 할 핵심 외래키(FK) 조합은?",
+                options: [
+                    "회원번호(FK) + 도서번호(FK)",
+                    "작가이름 + 출판연도",
+                    "책가격 + 페이지수",
+                    "사서이름 단독"
+                ],
+                answer: 0,
+                explanation: "대출 엔티티는 '누가(회원)' '어떤 책을(도서)' 빌렸는지 기록해야 하므로 회원번호와 도서번호가 외래키로 결합됩니다."
+            },
+            {
+                id: 16,
+                track: "Okasian Style",
+                category: "음식 배달 서비스 모델링",
+                question: "배달 서비스에서 음식점과 메뉴 간의 관계 카디널리티로 가장 알맞은 것은?",
+                options: [
+                    "음식점(1) : 메뉴(N)",
+                    "음식점(N) : 메뉴(1)",
+                    "음식점(1) : 메뉴(1)",
+                    "음식점(M) : 메뉴(N)"
+                ],
+                answer: 0,
+                explanation: "한 음식점은 여러 메뉴를 등록할 수 있고 메뉴는 하나의 음식점에 소속되므로 1:N 관계입니다."
+            },
+            {
+                id: 17,
+                track: "High Life",
+                category: "식별자 상세 분류",
+                question: "자기가 속한 엔티티 내에서 자체적으로 생성 및 정의되는 식별자를 무엇이라 부르는가?",
+                options: [
+                    "내부식별자 (Internal Identifier)",
+                    "외부식별자",
+                    "교차식별자",
+                    "복합상속식별자"
+                ],
+                answer: 0,
+                explanation: "자신 엔티티 내에서 독립적으로 만들어진 식별자는 내부식별자입니다."
+            },
+            {
+                id: 18,
+                track: "Flex",
+                category: "ERD 작성 절차",
+                question: "멋지게 데이터베이스 설계를 플렉스(Flex)하기 위한 ERD 작성 순서로 올바른 것은?",
+                options: [
+                    "엔티티 도출 → 배치 → 관계 설정 → 관계명 및 참여도/필수여부 설정",
+                    "관계 설정 → 엔티티 도출 → 삭제",
+                    "물리 쿼리 먼저 작성 → ERD 역산",
+                    "속성 이름 무작위 나열"
+                ],
+                answer: 0,
+                explanation: "ERD 작성은 엔티티 도출 및 그리기 ⇒ 배치 ⇒ 관계 설정 ⇒ 관계명 부여 ⇒ 참여도 및 필수여부 설정 순서로 진행됩니다."
+            },
+            {
+                id: 19,
+                track: "Me Have A Good Day",
+                category: "식별자의 필수 요건",
+                question: "기분 좋은 하루를 위해 데이터 무결성을 지키는 식별자의 성질 중, '반드시 값이 존재해야 하며 NULL이 될 수 없음'을 뜻하는 것은?",
+                options: [
+                    "존재성 (Existence / Not Null)",
+                    "가변성",
+                    "중복성",
+                    "선택성"
+                ],
+                answer: 0,
+                explanation: "식별자는 인스턴스를 고유하게 식별해야 하므로 반드시 값이 존재하는 존재성(NULL 불가)을 만족해야 합니다."
+            },
+            {
+                id: 20,
+                track: "Outro",
+                category: "종합 모델링 검증",
+                question: "데이터 모델링 학습을 마무리하는 아웃트로(Outro) 문제입니다. 올바른 데이터 모델링이 가져다주는 기대 효과로 가장 거리가 먼 것은?",
+                options: [
+                    "데이터 중복 최소화 및 유연성 확보",
+                    "비즈니스 프로세스의 명확한 시각화 및 구조화",
+                    "시스템 유지보수성 향상",
+                    "데이터 무결성 제약 제거 및 성능 저하 유도"
+                ],
+                answer: 3,
+                explanation: "데이터 모델링은 무결성 유지와 성능 최적화를 목표로 하므로, 무결성 제약 제거나 성능 저하는 잘못된 설명입니다."
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let userAnswers = new Array(quizData.length).fill(null);
+        let isAnswered = false;
+
+        const welcomeView = document.getElementById('welcome-view');
+        const quizView = document.getElementById('quiz-view');
+        const resultView = document.getElementById('result-view');
+        const playlistTracklist = document.getElementById('playlist-tracklist');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+        const questionBadge = document.getElementById('question-badge');
+        const trackTitle = document.getElementById('track-title');
+        const trackAlbum = document.getElementById('track-album');
+        const explanationBox = document.getElementById('explanation-box');
+        const explanationTitle = document.getElementById('explanation-title');
+        const explanationText = document.getElementById('explanation-text');
+        const explanationIcon = document.getElementById('explanation-icon');
+        const nextBtn = document.getElementById('next-btn');
+        const headerCurrentTrack = document.getElementById('header-current-track');
+        const playerCounter = document.getElementById('player-counter');
+        const playerTrackTitle = document.getElementById('player-track-title');
+        const shareModal = document.getElementById('share-modal');
+        const shareCardText = document.getElementById('share-card-text');
+
+        function renderPlaylistSidebar() {
+            playlistTracklist.innerHTML = '';
+            quizData.forEach((q, idx) => {
+                const isCurrent = idx === currentQuestionIndex;
+                const isCompleted = userAnswers[idx] !== null;
+                const isCorrect = userAnswers[idx] === q.answer;
+
+                let statusIcon = '<i class="fa-solid fa-circle-dot text-xs text-spotify-muted"></i>';
+                if (isCompleted) {
+                    statusIcon = isCorrect 
+                        ? '<i class="fa-solid fa-check text-spotify-green text-xs"></i>' 
+                        : '<i class="fa-solid fa-xmark text-red-400 text-xs"></i>';
+                }
+
+                const item = document.createElement('div');
+                item.className = `flex items-center justify-between p-2.5 rounded-lg cursor-pointer transition ${isCurrent ? 'bg-white/10 border-l-4 border-spotify-green' : 'hover:bg-white/5'}`;
+                item.onclick = () => jumpToQuestion(idx);
+                item.innerHTML = `
+                    <div class="flex items-center space-x-3 truncate">
+                        <div class="w-8 h-8 rounded bg-spotify-black flex items-center justify-center shrink-0 text-spotify-muted text-xs">
+                            ${statusIcon}
+                        </div>
+                        <div class="truncate">
+                            <p class="text-xs font-semibold truncate ${isCurrent ? 'text-spotify-green' : 'text-white'}">Q${idx + 1}. ${q.track}</p>
+                            <p class="text-[10px] text-spotify-muted truncate">${q.category}</p>
+                        </div>
+                    </div>
+                `;
+                playlistTracklist.appendChild(item);
+            });
+        }
+
+        function startQuiz() {
+            welcomeView.classList.add('hidden');
+            resultView.classList.add('hidden');
+            quizView.classList.remove('hidden');
+            currentQuestionIndex = 0;
+            score = 0;
+            userAnswers = new Array(quizData.length).fill(null);
+            loadQuestion();
+            renderPlaylistSidebar();
+        }
+
+        function loadQuestion() {
+            const q = quizData[currentQuestionIndex];
+            isAnswered = userAnswers[currentQuestionIndex] !== null;
+
+            headerCurrentTrack.innerText = `Track ${currentQuestionIndex + 1} of ${quizData.length}`;
+            progressText.innerText = `${currentQuestionIndex + 1} / ${quizData.length}`;
+            playerCounter.innerText = `${String(currentQuestionIndex + 1).padStart(2, '0')}/${quizData.length}`;
+            playerTrackTitle.innerText = `Q${currentQuestionIndex + 1}. ${q.track} (${q.category})`;
+            
+            const progressPercent = ((currentQuestionIndex + 1) / quizData.length) * 100;
+            progressBar.style.width = `${progressPercent}%`;
+
+            questionBadge.innerText = `Track ${String(currentQuestionIndex + 1).padStart(2, '0')}`;
+            trackAlbum.innerText = `Beenzino Theme: ${q.category}`;
+            trackTitle.innerText = `${q.track}`;
+
+            questionText.innerText = q.question;
+
+            optionsContainer.innerHTML = '';
+            q.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = `w-full text-left p-4 rounded-xl border transition flex items-center justify-between text-sm md:text-base font-medium `;
+                
+                const userSelected = userAnswers[currentQuestionIndex];
+                
+                if (userSelected !== null && userSelected !== undefined) {
+                    if (idx === q.answer) {
+                        btn.className += `bg-spotify-green/20 border-spotify-green text-white shadow-md`;
+                    } else if (idx === userSelected) {
+                        btn.className += `bg-red-500/20 border-red-500 text-white`;
+                    } else {
+                        btn.className += `bg-black/20 border-white/5 text-spotify-muted opacity-60`;
+                    }
+                    btn.disabled = true;
+                } else {
+                    btn.className += `bg-spotify-black/60 hover:bg-white/10 border-white/10 text-white hover:border-spotify-green/50 cursor-pointer`;
+                    btn.onclick = () => selectOption(idx);
+                }
+
+                btn.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <span class="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold text-spotify-muted shrink-0">${String.fromCharCode(65 + idx)}</span>
+                        <span>${opt}</span>
+                    </div>
+                `;
+                optionsContainer.appendChild(btn);
+            });
+
+            const userSelected = userAnswers[currentQuestionIndex];
+            if (userSelected !== null && userSelected !== undefined) {
+                explanationBox.classList.remove('hidden');
+                const isCorrect = userSelected === q.answer;
+                if (isCorrect) {
+                    explanationTitle.innerText = "정답입니다! (Correct)";
+                    explanationTitle.className = "font-bold text-sm mb-1 text-spotify-green";
+                    explanationIcon.innerHTML = '<i class="fa-solid fa-circle-check text-spotify-green"></i>';
+                } else {
+                    explanationTitle.innerText = "오답입니다. (Incorrect)";
+                    explanationTitle.className = "font-bold text-sm mb-1 text-red-400";
+                    explanationIcon.innerHTML = '<i class="fa-solid fa-circle-xmark text-red-400"></i>';
+                }
+                explanationText.innerText = q.explanation;
+                nextBtn.classList.remove('hidden');
+            } else {
+                explanationBox.classList.add('hidden');
+                nextBtn.classList.add('hidden');
+            }
+
+            renderPlaylistSidebar();
+        }
+
+        function selectOption(selectedIdx) {
+            if (isAnswered) return;
+            userAnswers[currentQuestionIndex] = selectedIdx;
+            
+            const q = quizData[currentQuestionIndex];
+            if (selectedIdx === q.answer) {
+                score++;
+            }
+            
+            isAnswered = true;
+            loadQuestion();
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < quizData.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            } else {
+                showResult();
+            }
+        }
+
+        function prevQuestionPlayer() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function nextQuestionPlayer() {
+            if (currentQuestionIndex < quizData.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        }
+
+        function jumpToQuestion(idx) {
+            currentQuestionIndex = idx;
+            loadQuestion();
+        }
+
+        function showResult() {
+            quizView.classList.add('hidden');
+            resultView.classList.remove('hidden');
+            
+            const percentage = Math.round((score / quizData.length) * 100);
+            document.getElementById('final-score').innerText = `${score} / ${quizData.length}`;
+            document.getElementById('final-percentage').innerText = `${percentage}%`;
+
+            let gradeTitle = "Certified Beenzino DB Master";
+            if (percentage === 100) {
+                gradeTitle = "👑 빈지노 & 데이터 모델링 완벽 마스터";
+            } else if (percentage >= 80) {
+                gradeTitle = "🔥 우수한 데이터 설계 감각";
+            } else if (percentage >= 50) {
+                gradeTitle = "🎵 개념 복습 추천";
+            } else {
+                gradeTitle = "🎧 핵심 정리 노트를 다시 읽어보세요";
+            }
+
+            document.getElementById('grade-badge').innerText = gradeTitle;
+            shareCardText.innerText = `빈지노 데이터 모델링 퀴즈 완료! 점수: ${score}/${quizData.length} (${percentage}%) - ${gradeTitle}`;
+            
+            headerCurrentTrack.innerText = `LP Finished`;
+            playerTrackTitle.innerText = `LP Completed - Score: ${score}/${quizData.length}`;
+        }
+
+        function restartQuiz() {
+            startQuiz();
+        }
+
+        function openShareModal() {
+            shareModal.classList.remove('hidden');
+        }
+
+        function closeShareModal() {
+            shareModal.classList.add('hidden');
+        }
+
+        function copyShareText() {
+            const percentage = Math.round((score / quizData.length) * 100);
+            const text = `🎧 [빈지노 데이터 모델링 이해 퀴즈] Spotify LP Edition\n내 점수: ${score}/${quizData.length} (${percentage}%)\n빈지노 명곡과 함께하는 데이터 모델링 퀴즈 완료!`;
+            
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                alert("클립보드에 공유 텍스트가 복사되었습니다!");
+            } catch (err) {
+                console.error('Failed to copy', err);
+            }
+            document.body.removeChild(textArea);
+            closeShareModal();
+        }
+
+        window.onload = function() {
+            renderPlaylistSidebar();
+        };
+    </script>
+</body>
+</html>
